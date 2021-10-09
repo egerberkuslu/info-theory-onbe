@@ -211,28 +211,35 @@ int main() {
 		fseek(fp, -1, SEEK_CUR);
 		i++;
 	}
-
+	printf("\n\n TABLE 1 !!!! \n\n");
 	for (j = 0; j < ALPHABET_COUNT; j++) {
 		//log2(x) = log10(x)/ log10(2)
 		(singleLetters + j)->probability =
 				(double) ((singleLetters + j)->frequency) / (*counter);
-		(singleLetters + j)->entropty = (singleLetters + j)->probability
+		(singleLetters + j)->entropty = (-1)*(singleLetters + j)->probability
 				* ((double) log((singleLetters + j)->probability)
 						/ (double) log(2));
+
 		printf("%c => FREQUENCY %d  PROBABILITY %f ENTROPY %f \n",
 				*(singleLetters + j)->letter, (singleLetters + j)->frequency,
 				(singleLetters + j)->probability,
 				(singleLetters + j)->entropty);
 	}
-
+	printf("\n\n TABLE 2 !!!! \n\n");
 	for (i = 0; i < ALPHABET_COUNT * ALPHABET_COUNT; i++) {
 		(doubleLetters + i)->probability = (double) ((doubleLetters + i)->frequency) / *(doubleLetterEachGroupFreq+(i/ALPHABET_COUNT));
-		(doubleLetters + i)->entropty = ((double) (doubleLetters + i)->probability) * ((double) log((doubleLetters + i)->probability)/(double) log(2));
-		printf("%c%c => FREQUENCT %d  PROPABILITY %f ENTROPY %f \n", *(doubleLetters + i)->first_letter,
+		(doubleLetters + i)->entropty = (-1)*((double) (doubleLetters + i)->probability) * ((double) log((doubleLetters + i)->probability)/(double) log(2));
+		printf("%c%c => FREQUENCY %d  PROPABILITY %f ENTROPY %f \n", *(doubleLetters + i)->first_letter,
 				*(doubleLetters + i)->second_letter,
 				(doubleLetters + i)->frequency, (doubleLetters + i)->probability,(doubleLetters + i)->entropty);
 	}
 	printf("TOTAL LETTERS %d", *counter);
+
+	printf("\n\n TABLE 3 !!!! \n\n");
+	for (i = 0; i < ALPHABET_COUNT * ALPHABET_COUNT; i++) {
+			printf("%c/%c =>  ENTROPY %f \n", *(doubleLetters + i)->first_letter,
+					*(doubleLetters + i)->second_letter,((singleLetters + (i/ALPHABET_COUNT))->entropty)-(doubleLetters + i)->entropty);
+		}
 
 	return 0;
 }
