@@ -258,7 +258,7 @@ int writeBit(int bit,int *counter,unsigned char *byte,int forceWrite,FILE *fp) {
 			if(*counter == 7) {
 				//write the text file;
 				*byte = *byte + bit;
-				printf("YAZILACAK OLAN BYTE %d \n ", *byte);
+				//printf("YAZILACAK OLAN BYTE %d \n ", *byte);
 				fwrite(byte,sizeof(char),1,fp);
 				//printf bytei yazdigimi temsil ediyor
 				*byte = *byte - *byte; // byte 0landi
@@ -317,7 +317,7 @@ int controlLookUpTable(char **code) {
 	return -1;
 }
 
-void decompress(unsigned char *byte,char letters[ALPHABET_COUNT],char **code,int readableBits) {
+void decompress(unsigned char *byte,char letters[ALPHABET_COUNT],char **code,int readableBits,FILE *decompFile) {
 	int counter = readableBits;
 	int shifter = 7;
 	char copyByte = *byte;
@@ -336,13 +336,15 @@ void decompress(unsigned char *byte,char letters[ALPHABET_COUNT],char **code,int
 		control = controlLookUpTable(code);
 		if(control != -1) { //buldu
 			printf("%c ",letters[control]);
+			fwrite(&letters[control],sizeof(char),1,decompFile);
+			
 			*code = "";
 		}
 		counter = counter - 1;
 		shifter = shifter -1;
 		copyByte = *byte;
 	}
-	printf("\n ILK BYTE BITTI \n\n\n");
+	//printf("\n ILK BYTE BITTI \n\n\n");
 }
 
 typedef struct letters_s {
@@ -590,7 +592,7 @@ int main() {
 	}
 	
 	//huffman baslar
-	lookUpTable = (char *)malloc(sizeof(char ) *ALPHABET_COUNT);
+	lookUpTable = (char **)malloc(sizeof(char *) *ALPHABET_COUNT);
 	//initLookUpTable();
 	char codeTable[ALPHABET_COUNT];
 	Queue q = initQueue();
@@ -634,11 +636,11 @@ int main() {
 		readableBits = 0;
 	} else {
 		byte = byte << (7-readCounter); //geriye kalan bitleri yazdirdim/
-		printf("unutulan OLAN BYTE %d \n\n ", byte);
+		//printf("unutulan OLAN BYTE %d \n\n ", byte);
 		fwrite(&byte,sizeof(unsigned char),1,binaryFile);
 		readableBits = readCounter-1;
 	}
-	//  00000000 00000000 00000000
+
 	fclose(fp);
 	fclose(binaryFile);
 	fp = fopen("output.bin", "rb");
@@ -649,21 +651,24 @@ int main() {
 	char *code = "";
 	int count;
 	i = 0;
+	FILE *decompFile = fopen("decompressed.txt", "a");
 	for(i=0;i<filelen;i++){
 		if(i == filelen-1){
 			if(readableBits != 0) {
 				fread(&harf,sizeof(char),1,fp);
-				decompress(&harf,alphabet,&code,readableBits);
+				decompress(&harf,alphabet,&code,readableBits,decompFile);
 			} else {
 				fread(&harf,sizeof(char),1,fp);
-				decompress(&harf,alphabet,&code,7);
+				decompress(&harf,alphabet,&code,7,decompFile);
 			}
 		} else {
 			fread(&harf,sizeof(char),1,fp);
-			decompress(&harf,alphabet,&code,7);
+			decompress(&harf,alphabet,&code,7,decompFile);
 		}
 		
 	}
+	fclose(decompFile);
+	fclose(fp);
 	
 	
 	
