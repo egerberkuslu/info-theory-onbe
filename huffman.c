@@ -259,7 +259,7 @@ int writeBit(int bit,int *counter,unsigned char *byte,int forceWrite,FILE *fp) {
 				//write the text file;
 				*byte = *byte + bit;
 				printf("YAZILACAK OLAN BYTE %d \n ", *byte);
-				fwrite(byte,sizeof(unsigned char),1,fp);
+				fwrite(byte,sizeof(char),1,fp);
 				//printf bytei yazdigimi temsil ediyor
 				*byte = *byte - *byte; // byte 0landi
 				*counter = -1;
@@ -275,7 +275,7 @@ int writeBit(int bit,int *counter,unsigned char *byte,int forceWrite,FILE *fp) {
 				printf("FORCE RUN AKTIF YAZILACAK OLAN BYTE %d \n ", *byte);
 				//printf bytei yazdigimi temsil ediyor
 				*byte = *byte - *byte; // byte 0landi
-				fwrite(byte,sizeof(unsigned char),1,fp);
+				fwrite(byte,sizeof(char),1,fp);
 				*counter = -1;
 				return 1;
 			}
@@ -317,14 +317,15 @@ int controlLookUpTable(char **code) {
 	return -1;
 }
 
-void decompress(unsigned char *byte,char letters[SIZE],char **code) {
-	int counter = 7;
+void decompress(unsigned char *byte,char letters[SIZE],char **code,int readableBits) {
+	int counter = readableBits;
+	int shifter = 7;
 	char copyByte = *byte;
 	char bit;
 	int control;
 	char writableBit = '1';
 	while(counter >= 0) {
-		bit = (copyByte >> counter) & 1;
+		bit = (copyByte >> shifter) & 1;
 		if(bit) {
 			writableBit = '1';
 			strncat(code,&writableBit,1);
@@ -338,6 +339,7 @@ void decompress(unsigned char *byte,char letters[SIZE],char **code) {
 			*code = "";
 		}
 		counter = counter - 1;
+		shifter = shifter -1;
 		copyByte = *byte;
 	}
 	printf("ILK BYTE BITTI \n\n\n");
@@ -398,44 +400,50 @@ int main() {
 		compress(letters[i%SIZE],&byte,&counter,i%SIZE,0,fp);
 	}
 	
-	for(i = SIZE-1 ; i >= 0; i--) {
+	for(i = SIZE-1; i >= 0; i--) {
 		compress(letters[i],&byte,&counter,i,0,fp);
 	}
+	int readableBits;
+	if(counter == 0) { // baska byte kalmadi
+		readableBits = 0;
+	} else {
+		byte = byte << (7-counter); //geriye kalan bitleri yazdirdim/
+		printf("unutulan OLAN BYTE %d \n\n ", byte);
+		fwrite(&byte,sizeof(unsigned char),1,fp);
+		readableBits = counter-1;
+	}
 	
-	
-	//fwrite(byte,sizeof(unsigned char),1,fp);
-	//printf bytei yazdigimi temsil ediyor
-	byte = byte << (7-counter);
-	printf("unutulan OLAN BYTE %d \n\n ", byte);
-	//	*byte = *byte - *byte; // byte 0landi
-	//*counter = -1;
-	fwrite(&byte,sizeof(unsigned char),1,fp);
-	
-	//compress(letters[i%5],&byte,&counter,i%5,1,fp);
 	
 	fclose(fp);
 	
 	fp = fopen("output.bin", "rb");
+	fseek(fp, 0, SEEK_END);
+	int filelen = ftell(fp);
+	rewind(fp); 
 	unsigned char harf = 'z';
 	char *code = "";
-	//char *deneme = "";
-	//char bit = '1';
-	//strncat(&deneme,&bit,1);
-	//printf("\n DENEME LAN %s \n",&deneme);
 	int count;
-	while(!feof(fp)) {
-		fread(&harf,sizeof(unsigned char),1,fp);
-		decompress(&harf,letters,&code);
+	i = 0;
+	for(i=0;i<filelen;i++){
+		if(i == filelen-1){
+			if(readableBits != 0) {
+				fread(&harf,sizeof(char),1,fp);
+				decompress(&harf,letters,&code,readableBits);
+			} else {
+				fread(&harf,sizeof(char),1,fp);
+				decompress(&harf,letters,&code,7);
+			}
+		} else {
+			fread(&harf,sizeof(char),1,fp);
+			decompress(&harf,letters,&code,7);
+		}
+		
 	}
+	// A   B   C    C D   E E D C B A
+    //110 100 11 || 1 101 0 1 11 01011111 00110000
 	
-	//int num, n, bitStatus;
-	//n = 3;
-	//bitStatus = (ilk_harf >> n) & 1;
-	//printf("OKUNAN %d \n",bitStatus);
+	
 
-	// A 	B 	C     C D    E 	 A      B  C    D     D E 
-	// 110 100  11 || 1 101  0  110 || 100 111  10 || 1 0
-	// 110 100  11 || 1 101  0  110 || 100 111  10 || 1 0 000000
 	
 }
 
