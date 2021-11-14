@@ -239,7 +239,7 @@ void compress(char letter,unsigned char *byte,int *counter,int value,int forceWr
 	int i = 0;
 	char *str = "";
 	
-		str = &lookUpTable[value];
+		str = lookUpTable[value];
 		for(i = 0 ; i< strlen(str);i++){
 			if(str[i] == '0') {
 				
@@ -259,7 +259,9 @@ void compress(char letter,unsigned char *byte,int *counter,int value,int forceWr
 int controlLookUpTable(char **code) {
 	int i = 0;
 	for(i=0;i<ALPHABET_COUNT;i++) {
-		if(!strcmp(&lookUpTable[i],code)) { //strcmp buldu esit diye
+		//printf("CONTROL LOOK UP TABLE, LOOKUPTABLE %s  , OKUNAN CODE %s \n",lookUpTable[i], code);
+		if(!strcmp(lookUpTable[i],code)) { //strcmp buldu esit diye
+			//printf("BULDUM !!!!!!!! \n ");
 			return i;
 		}
 	}
